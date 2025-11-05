@@ -881,8 +881,8 @@ def main():
     """
     # Default project paths (can be modified by user)
     # Using forward slashes or raw strings to avoid escape issues
-    default_project1 = r"C:\Users\ommed\Desktop\ARBITRAGE\FLET\mstock_flet\chtgpt_app\f0\f0 - Copy (2)\New folder\f0_copy\f0"
-    default_project2 = r"C:\Users\ommed\Desktop\ARBITRAGE\FLET\mstock_flet\chtgpt_app\f0\f0 - Copy (2)\New folder\f0_copy\f1"
+    default_project1 = r"C:\Users\user\Desktop\dir\d1"
+    default_project2 = r"C:\Users\user\Desktop\dir\d2"
     
     print("PROJECT COMPARISON TOOL")
     print("=" * 50)
@@ -1027,4 +1027,5 @@ def quick_compare(project1_path: str, project2_path: str,
 
 if __name__ == "__main__":
     # Run interactive comparison
+
     main()
