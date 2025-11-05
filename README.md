@@ -1,10 +1,6 @@
 # Project Structure File Utilities
 Python utilities for project structure and file management - generates project tree, recreates projects from text files, and compares project directories
 
-# Project Structure Utilities
-
-Python utilities for managing project structures - generate tree views, recreate projects, and compare directories.
-
 ## Features
 
 - **Project Structure Generator**: Creates comprehensive text file with complete project tree and file contents
