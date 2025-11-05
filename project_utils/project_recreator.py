@@ -253,7 +253,7 @@ def main():
     Main function to demonstrate usage
     """
     # Use the actual file name
-    source_file = "f0_directory_structure_20251018_152736.txt"
+    source_file = "your_project_structure_file.txt"
     
     safe_print("Starting Project Recreator...")
     safe_print(f"Looking for source file: {source_file}")
@@ -285,4 +285,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
