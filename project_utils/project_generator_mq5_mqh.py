@@ -2,7 +2,6 @@ import os
 import sys
 from pathlib import Path
 
-
 def generate_tree_structure(root_dir, prefix="", exclude_dirs=None, exclude_files=None):
     """
     Generate a visual tree structure of the directory with file names.
@@ -79,8 +78,8 @@ def get_file_contents(root_dir, exclude_dirs=None, exclude_files=None):
         exclude_files = set()
 
     output = []
-    root_dir_name = os.path.basename(root_dir)
-
+    
+    # We walk the directory tree
     for dirpath, dirnames, filenames in os.walk(root_dir):
         # Skip __pycache__ and excluded directories
         dirnames[:] = [
@@ -91,9 +90,9 @@ def get_file_contents(root_dir, exclude_dirs=None, exclude_files=None):
             and os.path.join(dirpath, d) not in exclude_dirs
         ]
 
-        # Skip the output file if it exists in the directory
+        # Skip the output file if it exists in the directory to prevent self-reading
         if os.path.basename(dirpath) == os.path.dirname(os.path.abspath(__file__)):
-            filenames = [f for f in filenames if f != "directory_structure_output.txt"]
+            filenames = [f for f in filenames if "directory_structure_" not in f]
 
         # Filter out excluded files
         filenames = [
@@ -112,19 +111,31 @@ def get_file_contents(root_dir, exclude_dirs=None, exclude_files=None):
                 output.append(f"\n────── FILE START: {filename} ({rel_path}) ──────\n")
 
                 try:
-                    # --- NEW: try UTF-16LE first (MetaEditor), then UTF-8, then ANSI ---
+                    # --- IMPROVED DECODING LOGIC ---
+                    # 1. Try UTF-8 first (Standard for most web/modern code). 
+                    #    If the file is UTF-16, this usually fails fast.
+                    # 2. Try UTF-16 (Standard for MetaTrader/MQL5).
+                    # 3. Try Windows-1252 (Fallback for ANSI/Legacy Windows files).
                     contents = None
-                    for encoding in ("utf-16-le", "utf-8", "windows-1252"):
+                    encodings_to_try = ["utf-8", "utf-16", "windows-1252"]
+                    
+                    for encoding in encodings_to_try:
                         try:
                             with open(filepath, "r", encoding=encoding) as f:
                                 contents = f.read()
-                            break
+                            break # If successful, stop trying other encodings
                         except UnicodeDecodeError:
+                            continue # If failed, try next encoding
+                        except UnicodeError:
                             continue
-                    if contents is None:          # all encodings failed
-                        raise UnicodeDecodeError("unknown", b"", 0, 1, "fallback failed")
+
+                    if contents is None:
+                        # If all text decoders fail, assume it's a binary file
+                        raise UnicodeDecodeError("unknown", b"", 0, 1, "All encodings failed")
+                    
                     output.append(contents)
                     output.append(f"\n────── FILE END: {filename} ({rel_path}) ──────")
+                
                 except UnicodeDecodeError:
                     output.append("[BINARY FILE - CONTENTS NOT SHOWN]")
                     output.append(f"\n────── FILE END: {filename} ({rel_path}) ──────")
@@ -176,6 +187,7 @@ def main():
     parent_dir = os.path.abspath(parent_dir)
 
     # Generate the output
+    print(f"\nProcessing: {parent_dir}...")
     output = f"Directory Structure for: {parent_dir}\n\n"
     output += generate_tree_structure(
         parent_dir, exclude_dirs=exclude_dirs, exclude_files=exclude_files
@@ -199,13 +211,12 @@ def main():
     try:
         with open(output_file, "w", encoding="utf-8") as f:
             f.write(output)
-        print(f"Directory structure and contents saved to {output_file}")
+        print(f"Directory structure and contents saved to:\n{output_file}")
     except Exception as e:
         print(f"Error saving output file: {str(e)}")
 
 
 if __name__ == "__main__":
-
     # 1️⃣ Get the absolute path of the currently running script
     script_path = os.path.abspath(__file__)
     print("Script Path:", script_path)
@@ -215,53 +226,13 @@ if __name__ == "__main__":
     print("Base Directory:", base_dir)
 
     # 3️⃣ Walk through all directories and nested directories
-    print("\nAll directories under base path:")
-    for root, dirs, files in os.walk(base_dir):
-        for d in dirs:
-            print(os.path.join(root, d))
+    print("\nAll directories under base path (first level):")
+    try:
+        # Show immediate subdirectories to help user choose
+        for d in os.listdir(base_dir):
+            if os.path.isdir(os.path.join(base_dir, d)) and d != "__pycache__":
+                print(f" - {d}")
+    except Exception:
+        pass # Ignore listing errors
 
     main()
-
-
-# Key Enhancements:
-# Exclusion Parameters:
-
-# Added exclude_dirs and exclude_files parameters to both main functions
-
-# These parameters accept sets of directory and file names/paths to exclude
-
-# User Input for Exclusions:
-
-# Added get_exclusion_list() helper function to get comma-separated exclusions from user
-
-# Users can now specify directories/files to exclude when running the script
-
-# Flexible Exclusion:
-
-# Can exclude by name (e.g., "venv") or by path (e.g., "/full/path/to/dir")
-
-# Exclusions work at any level in the directory hierarchy
-
-# Both directory structure and file contents respect the exclusions
-
-# Backward Compatibility:
-
-# All existing functionality remains unchanged
-
-# If no exclusions are provided, behavior is identical to original version
-
-# Usage Examples:
-# Exclude common directories:
-
-# text
-# Enter directories/files to exclude (comma-separated, relative or absolute paths):
-# Directories to exclude (e.g., 'venv,.git'): venv, .git, __pycache__, node_modules
-# Files to exclude (e.g., '*.log,config.ini'): 
-# Exclude specific files:
-
-# text
-# Files to exclude (e.g., '*.log,config.ini'): secrets.json, *.log, temp_*.txt
-# Exclude by full path:
-
-# text
-# Directories to exclude: /home/user/project/tests,/home/user/project/docs
